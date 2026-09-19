@@ -1,0 +1,45 @@
+name: Deploy Static HTML to GitHub Pages
+
+# 1. Kiedy akcja ma się uruchomić?
+on:
+  push:
+    branches:
+      - main
+    # Wyzwól akcję TYLKO wtedy, gdy zmieni się plik index.html
+    paths:
+      - 'index.html'
+
+# 2. Uprawnienia niezbędne do zapisu na GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Zabezpieczenie przed jednoczesnym wdrażaniem kilku zmian
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+# 3. Główne zadania (jobs)
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Przesłanie plików (Artifact)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Wysyłamy cały główny folder '.' w którym leży index.html
+          path: '.'
+
+      - name: Wdrożenie na GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
